@@ -15,7 +15,7 @@
 #define WsRxPin 3
 #define WsBaud 9600
 
-#define ComBaud 9600
+#define ComBaud 115200
 
 #define bufSize 300
 
