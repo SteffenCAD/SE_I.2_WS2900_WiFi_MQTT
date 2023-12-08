@@ -29,40 +29,46 @@ Ws2900Data::~Ws2900Data()
 
 
 #pragma region private_functions
-    void Ws2900Data::set_TempOutside(char *buff[])
+    void Ws2900Data::set_TempOutside(char *buff)
     {
-        tempOutside = (float)(*buff[posTempOutside1] * 4.50);
+        tempOutside = (float)(buff[posTempOutside1] * 4.50);
     }
-    void Ws2900Data::set_HumidityOutside(char* buff[])
+    
+    void Ws2900Data::set_HumidityOutside(char* buff)
     {
-        humidityOutside = *buff[posHumidityOutside];
+        humidityOutside = buff[posHumidityOutside];
     }
-    void Ws2900Data::set_PressureOutside(char* buff[])
+    
+    void Ws2900Data::set_PressureOutside(char* buff)
     {
-        pressureOutside = ((uint16)*buff[posPressureOutside]) | *buff[posPressureOutside + 1];
-    }
-
-    void Ws2900Data::set_TempInside(char* buff[])
-    {
-        tempInside = (float)(*buff[posTempInside] * 4.50);
-    }
-    void Ws2900Data::set_HumidityInside(char* buff[])
-    {
-        humidityInside = *buff[posHumidityInside];
-    }
-    void Ws2900Data::set_PressureInside(char* buff[])
-    {
-        pressureInside = ((uint16)*buff[posPressureOutside]) | *buff[posPressureOutside + 1];
+        pressureOutside = ((int)buff[posPressureOutside]) | buff[posPressureOutside + 1];
     }
 
-    void Ws2900Data::set_WindSpeed(char* buff[])
+    void Ws2900Data::set_TempInside(char* buff)
     {
-        windSpeed = (float)*buff[posWindSpeed1] * 1.00;
+        tempInside = (float)(buff[posTempInside] * 4.50);
     }
-    void Ws2900Data::set_WindDirection(char* buff[])
+    
+    void Ws2900Data::set_HumidityInside(char* buff)
     {
-        windDirection = *buff[posWindDirection];
+        humidityInside = buff[posHumidityInside];
     }
+    
+    void Ws2900Data::set_PressureInside(char* buff)
+    {
+        pressureInside = ((int)buff[posPressureOutside]) | buff[posPressureOutside + 1];
+    }
+
+    void Ws2900Data::set_WindSpeed(char* buff)
+    {
+        windSpeed = (float)buff[posWindSpeed1] * 1.00;
+    }
+    
+    void Ws2900Data::set_WindDirection(char* buff)
+    {
+        windDirection = buff[posWindDirection];
+    }
+    
     void Ws2900Data::set_WindOrientation()
     {
         //convert wind direction to wind orientation as string
@@ -76,25 +82,26 @@ Ws2900Data::~Ws2900Data()
         if(windDirection >= 293 && windDirection <= 337){strcpy(windOrientation,*Orientations[7]);}
     }
 
-    void Ws2900Data::set_LightIntensity(char* buff[])
+    void Ws2900Data::set_LightIntensity(char* buff)
     {
-        lightIntensity = *buff[posLightIntensity];
+        lightIntensity = buff[posLightIntensity];
     }
-    void Ws2900Data::set_UvIntensity(char* buff[])
+    
+    void Ws2900Data::set_UvIntensity(char* buff)
     {
-        uvIntensity = *buff[posUvIntensity];
+        uvIntensity = buff[posUvIntensity];
     }
 
-    void Ws2900Data::set_Rain(char* buff[])
+    void Ws2900Data::set_Rain(char* buff)
     {
-        rain = *buff[posRain];
+        rain = buff[posRain];
     }
 #pragma endregion
 
 
 #pragma region public_functions
 
-void Ws2900Data::set_newData(char *buff[])
+void Ws2900Data::set_newData(char *buff)
 {
     set_TempOutside(buff);
     set_HumidityOutside(buff);
@@ -125,14 +132,14 @@ bool Ws2900Data::available()
     return retval;
 }
 
-char* Ws2900Data::print()
+void Ws2900Data::print(char *retval)
 {
-    char retval[200];
+    //char retval[200];
 
     sprintf(retval, "TempOut: %f | HumiOut: %d | PresOut: %d | TemIn: %f | HumiIn %d | PresIn %d | WindSp: %f | WindDr: %d | LighIn: %d | UvIn: %d | Rain: %d",
                     tempOutside, humidityOutside, pressureOutside, tempInside, humidityInside, pressureInside, windSpeed, windDirection, lightIntensity, uvIntensity, rain);
 
-    return retval;
+    //return retval;
 }
 
 float   Ws2900Data::get_TempOutside()       {return tempOutside;}

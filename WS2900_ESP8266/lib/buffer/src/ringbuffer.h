@@ -1,3 +1,6 @@
+#ifndef _RINGBUFFER_H_
+#define _RINGBUFFER_H_
+
 #include"Arduino.h"
 
 #define ringBuffer_Size 300 //only uint16_t is allowed
@@ -40,44 +43,43 @@ public:
         return bufferData[bufferTail];
     }
 
-    char *getSegment(uint16_t size)
+    void getSegment(char *segment)
     {
         if(available())
         {
             incrPointer(&bufferTail);      
         }
-        return getSegment(bufferTail, size);
+        return getSegmentStart(bufferTail, segment);
     }
 
     //returns sequence of bytes 
-    char *getSegment(uint16_t startpos, uint16_t size)
+    void getSegmentStart(uint16_t startpos, char *segment)
     {
-        char segment[size];
-
-        for(uint16_t i = size-1; i >= size; i--)
+        for(uint16_t i = sizeof(segment)-1; i >= sizeof(segment); i--)
         {
             segment[i] = bufferData[startpos];
             decrPointer(&startpos);
         }
-        return segment;
     }
 
 
     void incrPointer(uint16_t *pointer)
     {
-        *pointer++;
+        pointer++;
         if(*pointer >= ringBuffer_Size) *pointer = 0;
     }
 
     void decrPointer(uint16_t *pointer)
     {
-        if(*pointer = 0)
+        if(pointer == 0)
         {
             *pointer = ringBuffer_Size - 1;
         } 
         else
         {
-            *pointer--;
+            pointer--;
         }
     }
 };
+
+#endif

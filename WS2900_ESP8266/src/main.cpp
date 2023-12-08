@@ -1,6 +1,5 @@
 #include "main.h"
 
-
 void setup() 
 {
   pinMode(LED_PIN, OUTPUT);
@@ -8,8 +7,7 @@ void setup()
   Serial.begin(ComBaud);
 
   WsSerial.begin(WsBaud);
-  WsBuffer.begin();
-  WsRouter.begin(&WsBuffer, &WsData);
+  WsRouter.begin(&WsBuffer, &WsData, &WsSerial);
 }
 
 
@@ -27,7 +25,8 @@ void loop()
   //if WsData has new data, print to debug Serial
   if(WsData.available())
   {
-    Serial.println(WsData.print());
+    char data[200];
+    WsData.print(data);
+    Serial.println(data);
   }
-
 }

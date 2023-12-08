@@ -49,32 +49,32 @@ private:
     int rain;
 
     //private function to set the data
-    void set_TempOutside(char *buff[]);
-    void set_HumidityOutside(char *buff[]);
-    void set_PressureOutside(char *buff[]);
+    void set_TempOutside(char *buff);
+    void set_HumidityOutside(char *buff);
+    void set_PressureOutside(char *buff);
 
-    void set_TempInside(char* buff[]);
-    void set_HumidityInside(char* buff[]);
-    void set_PressureInside(char* buff[]);
+    void set_TempInside(char* buff);
+    void set_HumidityInside(char* buff);
+    void set_PressureInside(char* buff);
 
-    void set_WindSpeed(char* buff[]);
-    void set_WindDirection(char* buff[]);
+    void set_WindSpeed(char* buff);
+    void set_WindDirection(char* buff);
     void set_WindOrientation(void);
 
-    void set_LightIntensity(char* buff[]);
-    void set_UvIntensity(char* buff[]);
+    void set_LightIntensity(char* buff);
+    void set_UvIntensity(char* buff);
 
-    void set_Rain(char* buff[]);
+    void set_Rain(char* buff);
 
 public:
     Ws2900Data(/* args */);
     ~Ws2900Data();
 
     //function to fill data
-    void    set_newData(char *buff[]);
+    void    set_newData(char *buff);
     bool    available();
 
-    char*   print();
+    void    print(char *retval);
 
     float   get_TempOutside();
     int     get_HumidityOutside();
