@@ -25,6 +25,7 @@ void loop()
   //if WsData has new data, print to debug Serial
   if(WsData.available())
   {
+    Serial.print("test");
     char data[200];
     WsData.print(data);
     Serial.println(data);

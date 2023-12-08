@@ -11,8 +11,8 @@
 //##    define stuff    ####
 #define LED_PIN 4
 
-#define WsTxPin 2
-#define WsRxPin 3
+#define WsTxPin D3
+#define WsRxPin D2
 #define WsBaud 9600
 
 #define ComBaud 115200
