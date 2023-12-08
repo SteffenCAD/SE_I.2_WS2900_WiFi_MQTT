@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 
-const int rxPin = D2;  // RX-Pin, verbinde mit dem TX-Pin des anderen Geräts
-const int txPin = D3;  // TX-Pin, verbinde mit dem RX-Pin des anderen Geräts
+const int rxPin = D2;  // RX-Pin
+const int txPin = D3;  // TX-Pin
 
 SoftwareSerial mySerial(rxPin, txPin);
 
