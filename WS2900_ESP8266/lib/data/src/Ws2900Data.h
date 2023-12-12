@@ -5,23 +5,21 @@
 
 
 //define position of data
-#define posTempOutside1     23
-#define posTempOutside2     26
+#define posTempOutside      16
 #define posHumidityOutside  28
 #define posPressureOutside  33
 
-#define posTempInside       12
+#define posTempInside       11
 #define posHumidityInside   14
-#define posPressureInside
 
 #define posWindSpeed1       40
 #define posWindSpeed2       43
-#define posWindDirection    37
+#define posWindDirection    36
 
 #define posLightIntensity   90
 #define posUvIntensity      96
 
-#define posRain 59
+#define posRain 55
 
 
 class Ws2900Data
@@ -31,22 +29,22 @@ private:
     bool newData;
 
     float tempOutside;
-    int humidityOutside;
-    int pressureOutside;
+    uint8_t humidityOutside;
+    float pressureOutside;
 
     float tempInside;
-    int humidityInside;
-    int pressureInside;
+    uint8_t humidityInside;
+    float pressureInside;
 
     float windSpeed;
-    int windDirection;
+    uint16_t windDirection;
     char windOrientation[2];
     const char *Orientations[8][2] = {"N","NO","O","SO","S","SW","W","NW"};
 
-    int lightIntensity;
-    int uvIntensity;
+    float lightIntensity;
+    uint8_t uvIntensity;
 
-    int rain;
+    float rain;             //mm/h
 
     //private function to set the data
     void set_TempOutside(char *buff);
@@ -55,7 +53,6 @@ private:
 
     void set_TempInside(char* buff);
     void set_HumidityInside(char* buff);
-    void set_PressureInside(char* buff);
 
     void set_WindSpeed(char* buff);
     void set_WindDirection(char* buff);
@@ -70,6 +67,8 @@ public:
     Ws2900Data(/* args */);
     ~Ws2900Data();
 
+    void get_time(char buff);
+
     //function to fill data
     void    set_newData(char *buff);
     bool    available();
@@ -77,21 +76,20 @@ public:
     void    print(char *retval);
 
     float   get_TempOutside();
-    int     get_HumidityOutside();
-    int     get_PressureOutside();
+    uint8_t get_HumidityOutside();
+    float   get_PressureOutside();
 
     float   get_TempInside();
-    int     get_HumidityInside();
-    int     get_PressureInside();
+    uint8_t get_HumidityInside();
 
     float   get_WindSpeed();
-    int     get_WindDirection();
+    uint16_t get_WindDirection();
     char*   get_WindOrientation();
 
-    int     get_LightIntensity();
-    int     get_UvIntensity();
+    float   get_LightIntensity();
+    uint8_t get_UvIntensity();
 
-    int     get_Rain();
+    float get_Rain();
 };
 
 #endif

@@ -11,7 +11,6 @@ Ws2900Data::Ws2900Data(/* args */)
 
     tempInside = 0.00;
     humidityInside = 0;
-    pressureInside = 0;
 
     windSpeed = 0.00;
     windDirection = 0;
@@ -31,7 +30,7 @@ Ws2900Data::~Ws2900Data()
 #pragma region private_functions
     void Ws2900Data::set_TempOutside(char *buff)
     {
-        tempOutside = (float)(buff[posTempOutside1] * 4.50);
+        tempOutside = (float)((buff[posTempOutside]*256 +buff[posTempOutside + 1])/10.00  -40.0 );
     }
     
     void Ws2900Data::set_HumidityOutside(char* buff)
@@ -41,32 +40,27 @@ Ws2900Data::~Ws2900Data()
     
     void Ws2900Data::set_PressureOutside(char* buff)
     {
-        pressureOutside = ((int)buff[posPressureOutside]) | buff[posPressureOutside + 1];
+        pressureOutside = ((buff[posPressureOutside] << 8) | (buff[posPressureOutside + 1]))/10.00;
     }
 
     void Ws2900Data::set_TempInside(char* buff)
     {
-        tempInside = (float)(buff[posTempInside] * 4.50);
+        tempInside = (float)((buff[posTempInside]*256 +buff[posTempInside + 1])/10.00  -40.0 );
     }
     
     void Ws2900Data::set_HumidityInside(char* buff)
     {
         humidityInside = buff[posHumidityInside];
     }
-    
-    void Ws2900Data::set_PressureInside(char* buff)
-    {
-        pressureInside = ((int)buff[posPressureOutside]) | buff[posPressureOutside + 1];
-    }
 
     void Ws2900Data::set_WindSpeed(char* buff)
     {
-        windSpeed = (float)buff[posWindSpeed1] * 1.00;
+        windSpeed = (float)buff[posWindSpeed1] / 2.8;
     }
     
     void Ws2900Data::set_WindDirection(char* buff)
     {
-        windDirection = buff[posWindDirection];
+        windDirection = (buff[posWindDirection] << 8) | (buff[posWindDirection+1]);
     }
     
     void Ws2900Data::set_WindOrientation()
@@ -84,7 +78,7 @@ Ws2900Data::~Ws2900Data()
 
     void Ws2900Data::set_LightIntensity(char* buff)
     {
-        lightIntensity = buff[posLightIntensity];
+        lightIntensity = ((buff[posLightIntensity] << 8) | buff[posLightIntensity]) / 10000.00;
     }
     
     void Ws2900Data::set_UvIntensity(char* buff)
@@ -94,7 +88,7 @@ Ws2900Data::~Ws2900Data()
 
     void Ws2900Data::set_Rain(char* buff)
     {
-        rain = buff[posRain];
+        rain = ((buff[posRain] << 8) | buff[posRain + 1])/10.0;
     }
 #pragma endregion
 
@@ -106,17 +100,13 @@ void Ws2900Data::set_newData(char *buff)
     set_TempOutside(buff);
     set_HumidityOutside(buff);
     set_PressureOutside(buff);
-
     set_TempInside(buff);
     set_HumidityInside(buff);
-    set_PressureInside(buff);
-
     set_WindSpeed(buff);
     set_WindDirection(buff);
-    set_WindOrientation();
+    //set_WindOrientation();
     set_LightIntensity(buff);
     set_UvIntensity(buff);
-
     set_Rain(buff);
 
     //inicate that new Data is available
@@ -134,37 +124,31 @@ bool Ws2900Data::available()
 
 void Ws2900Data::print(char *retval)
 {
-    //char retval[200];
-
-    sprintf(retval, "TempOut: %f | HumiOut: %d | PresOut: %d | TemIn: %f | HumiIn %d | PresIn %d | WindSp: %f | WindDr: %d | LighIn: %d | UvIn: %d | Rain: %d",
-                    tempOutside, humidityOutside, pressureOutside, tempInside, humidityInside, pressureInside, windSpeed, windDirection, lightIntensity, uvIntensity, rain);
-
-    //return retval;
+    sprintf(retval, "TempOut: %2f | HumiOut: %i | PresOut: %2f | TemIn: %2f | HumiIn %i  | WindSp: %2f | WindDr: %i | LighIn: %f | UvIn: %i | Rain: %f",
+                    tempOutside, humidityOutside, pressureOutside, tempInside, humidityInside, windSpeed, windDirection, lightIntensity, uvIntensity, rain);
 }
 
 float   Ws2900Data::get_TempOutside()       {return tempOutside;}
 
-int     Ws2900Data::get_HumidityOutside()   {return humidityOutside;}
+uint8_t Ws2900Data::get_HumidityOutside()   {return humidityOutside;}
 
-int     Ws2900Data::get_PressureOutside()   {return pressureOutside;}
+float   Ws2900Data::get_PressureOutside()   {return pressureOutside;}
 
 float   Ws2900Data::get_TempInside()        {return tempInside;}
 
-int     Ws2900Data::get_HumidityInside()    {return humidityInside;}
-
-int     Ws2900Data::get_PressureInside()    {return pressureInside;}
+uint8_t Ws2900Data::get_HumidityInside()    {return humidityInside;}
 
 float   Ws2900Data::get_WindSpeed()         {return windSpeed;}
 
-int     Ws2900Data::get_WindDirection()     {return windDirection;}
+uint16_t Ws2900Data::get_WindDirection()     {return windDirection;}
 
 char*   Ws2900Data::get_WindOrientation()   {return windOrientation;}
 
-int     Ws2900Data::get_LightIntensity()    {return lightIntensity;}
+float Ws2900Data::get_LightIntensity()    {return lightIntensity;}
 
-int     Ws2900Data::get_UvIntensity()       {return uvIntensity;}
+uint8_t Ws2900Data::get_UvIntensity()       {return uvIntensity;}
 
-int     Ws2900Data::get_Rain()              {return rain;}
+float Ws2900Data::get_Rain()              {return rain;}
 
 
 #pragma endregion

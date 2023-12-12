@@ -31,7 +31,7 @@ public:
     void add(char data)
     {
         incrPointer(&bufferHead);
-        bufferData[bufferHead] = data;
+        strncpy(&bufferData[bufferHead], &data, 1);
     }
 
     char getChar()
@@ -40,45 +40,52 @@ public:
         {
             incrPointer(&bufferTail);
         }
-        return bufferData[bufferTail];
+        char temp;
+        strncpy(&temp, &bufferData[bufferTail], 1);
+        return temp;
     }
 
-    void getSegment(char *segment)
+    void getSegment(char *segment, uint16_t size)
     {
         if(available())
         {
             incrPointer(&bufferTail);      
         }
-        return getSegmentStart(bufferTail, segment);
+
+        getSegmentStart(bufferTail, segment, size);
     }
 
-    //returns sequence of bytes 
-    void getSegmentStart(uint16_t startpos, char *segment)
+    void getSegmentStart(uint16_t startpos, char *segment, uint16_t size)
     {
-        for(uint16_t i = sizeof(segment)-1; i >= sizeof(segment); i--)
+        for(uint16_t i = size; i > 0; i--)
         {
-            segment[i] = bufferData[startpos];
-            decrPointer(&startpos);
+            segment[i-1] = bufferData[startpos-(size-i)];
         }
     }
 
 
     void incrPointer(uint16_t *pointer)
     {
-        pointer++;
-        if(*pointer >= ringBuffer_Size) *pointer = 0;
+        int tempPointer = *pointer;
+        tempPointer++;
+
+        if(tempPointer >= ringBuffer_Size) tempPointer = 0;
+
+        *pointer = tempPointer;
     }
 
     void decrPointer(uint16_t *pointer)
     {
-        if(pointer == 0)
+        int tempPointer = *pointer;
+        if(tempPointer == 0)
         {
-            *pointer = ringBuffer_Size - 1;
+            tempPointer = ringBuffer_Size - 1;
         } 
         else
         {
-            pointer--;
+            tempPointer--;
         }
+        *pointer = tempPointer;
     }
 };
 

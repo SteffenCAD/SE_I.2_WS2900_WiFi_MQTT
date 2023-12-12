@@ -8,19 +8,22 @@
 
 #define bufSize 300
 
+#define printRawData
 
 
 
 class router
 {
-public:
-    void begin(ringbuffer *buffer, Ws2900Data *data, SoftwareSerial *serial);
-    void route();
 
 private:
     ringbuffer *Wsbuffer;
     Ws2900Data *WsData;
     SoftwareSerial *WsSerial;
+
+public:
+    void begin(ringbuffer *buffer, Ws2900Data *data, SoftwareSerial *serial);
+    void route();
+
 };
 
 
