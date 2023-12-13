@@ -9,7 +9,10 @@
 class ringbuffer
 {
 private:
-
+    bool        doNextSegment = false;  //enables next segment
+    bool        nextSegmentState =false;    //if true, next segment is complete
+    uint16_t    nextSegmentSize = 0;    //number of bytes of next segment
+    uint16_t    nextSegmentCount = 0;   //current counter of next segment
 
 public:
 
@@ -38,7 +41,7 @@ public:
     {
         if(available())
         {
-            incrPointer(&bufferTail);
+            incrTail();
         }
         char temp;
         strncpy(&temp, &bufferData[bufferTail], 1);
@@ -48,10 +51,9 @@ public:
     void getSegment(char *segment, uint16_t size)
     {
         if(available())
-        {
-            incrPointer(&bufferTail);      
+        {     
+            incrTail();
         }
-
         getSegmentStart(bufferTail, segment, size);
     }
 
@@ -63,6 +65,66 @@ public:
         }
     }
 
+    void getNextSegment(uint16_t size)
+    {
+        //check if data is allready available
+        if(diffTailHead() >= size)
+        {
+            nextSegmentState = true;
+        }
+        else
+        {
+            //save size
+            nextSegmentSize = size;
+            //enable next segment
+            doNextSegment = true;
+        }
+    }
+
+    bool nextSegmentAvailable()
+    {
+        bool retval = nextSegmentState;
+        //if new data is true, reset
+        if(nextSegmentState) nextSegmentState = false;
+        //return state of available data
+        return retval;     
+    }
+
+    void incrTail()
+    {
+        incrPointer(&bufferTail);
+
+        //next Segment
+        if(doNextSegment)
+        {
+            nextSegmentCount++;
+            if(nextSegmentCount >= nextSegmentSize)
+            {
+                //reset mechanics
+                doNextSegment       = false;
+                nextSegmentCount    = 0;
+
+                //indicate available data
+                nextSegmentState    = true;
+            }
+        }
+    }
+
+    /// @brief return difference between tail and head of the buffer
+    /// @return 
+    uint16_t diffTailHead()
+    {
+        uint16_t counter = 0;
+        uint16_t tempTail = bufferTail;
+
+        while(tempTail != bufferHead)
+        {
+            incrPointer(&tempTail);
+            counter++;
+        }
+
+        return counter;
+    }
 
     void incrPointer(uint16_t *pointer)
     {
