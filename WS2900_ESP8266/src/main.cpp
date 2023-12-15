@@ -9,11 +9,16 @@ void setup()
   Serial.begin(ComBaud);
   WsSerial.begin(WsBaud);
 
+  Serial.println("connect to wifi");
   WiFi.begin(ssid, password);
+  Serial.println("ntp begin");
   NtpClient.begin();
   NtpClient.setTimeOffset(0);
 
+  Serial.println("router begin");
   WsRouter.begin(&WsBuffer, &WsData, &WsSerial, &NtpClient);
+  NtpClient.update();
+  Serial.println(NtpClient.getFormattedTime());
 }
 
 unsigned long millis_old = 0;

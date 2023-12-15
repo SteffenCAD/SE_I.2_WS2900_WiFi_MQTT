@@ -59,9 +59,12 @@ public:
 
     void getSegmentStart(uint16_t startpos, char *segment, uint16_t size)
     {
+
         for(uint16_t i = size; i > 0; i--)
         {
-            segment[i-1] = bufferData[startpos-(size-i)];
+            segment[i-1] = bufferData[startpos];
+            decrPointer(&startpos);
+            //segment[i-1] = bufferData[startpos-(size-i)];
         }
     }
 

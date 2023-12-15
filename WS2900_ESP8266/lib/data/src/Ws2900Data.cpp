@@ -124,7 +124,7 @@ bool Ws2900Data::available()
 
 void Ws2900Data::print(char *retval)
 {
-    sprintf(retval, "TempOut: %2f | HumiOut: %i | PresOut: %2f | TemIn: %2f | HumiIn %i  | WindSp: %2f | WindDr: %i | LighIn: %f | UvIn: %i | Rain: %f",
+    sprintf(retval, "TempOut: %.2f degC | HumiOut: %i %% | PresOut: %.2f mBar | TemIn: %.2f degC | HumiIn %i %% | WindSp: %.2f m/s | WindDr: %i deg | LighIn: %.2f klux | UvIn: %i | Rain: %.2f mm/h",
                     tempOutside, humidityOutside, pressureOutside, tempInside, humidityInside, windSpeed, windDirection, lightIntensity, uvIntensity, rain);
 }
 
