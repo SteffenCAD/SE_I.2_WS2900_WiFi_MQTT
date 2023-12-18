@@ -128,6 +128,12 @@ void router::route()
             //enable get next segment from buffer
             Wsbuffer->getNextSegment(sizeof(WsRawData) - sizeof(patt4));
         }
+        else if(strncmp(temp1, patt6, 4) == 0)
+        {   
+            resp6_send = true;
+            resp6_time = millis();
+            initOta = true;
+        }  
 
         //if next segment is available
         if(Wsbuffer->nextSegmentAvailable())
@@ -216,6 +222,18 @@ void router::route()
             WsSerial->write(resp5[i]);
         }
     }
+    else if(resp6_send && millis() > (resp6_time + resp6_delay))
+    {
+        //reset
+        resp6_send = false;
+        resp6_time = 0;
+
+        //send response
+        for(int i = 0; i < sizeof(resp6); i++)
+        {
+            WsSerial->write(resp6[i]);
+        }
+    }
 }
 
 void router::createDate(char *array)
@@ -259,4 +277,13 @@ void router::checkSum_8Mod256(char *array, size_t size)
     }
 
     array[size-1] = sum % 256;
+}
+
+bool router::initOTA()
+{
+    bool retval = initOta;
+    //if new data is true, reset
+    if(initOta) initOta = false;
+    //return state of available data
+    return retval;
 }

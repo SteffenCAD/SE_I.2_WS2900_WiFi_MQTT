@@ -7,6 +7,7 @@ void setup()
   Serial.begin(ComBaud);
   WsSerial.begin(WsBaud);
 
+  Serial.println();
   Serial.println("connect to wifi");
   espClientSec.setInsecure();   //allow unsecure connections (don't compare certificate)
   WiFi.begin(ssid, password);
@@ -22,6 +23,15 @@ void setup()
   Serial.println("init MQTT");
   MqttClient.setServer(mqtt_server, mqtt_port);
   MqttClient.connect(mqtt_clientId, mqtt_user, mqtt_pass);
+
+  Serial.println("init OTA");
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", "Hi! I am ESP8266.");
+    });
+  server.begin();
+
+
+  Serial.println("init complete");
 }
 
 void loop() 
@@ -64,5 +74,20 @@ void loop()
     {
       MqttClient.connect(mqtt_clientId, mqtt_user, mqtt_pass);
     }
+  }
+
+  //if ota service has to init
+  if(WsRouter.initOTA())
+  {
+    initOtaTime = millis();
+    Serial.println("init ota");
+    AsyncElegantOTA.begin(&server);    // Start ElegantOTA
+  }
+
+  if(initOtaTime != 0 && (initOtaTime + initOtaTimeout) < millis())
+  {
+    initOtaTime = 0;
+    Serial.println("reset esp");
+    ESP.restart();
   }
 }

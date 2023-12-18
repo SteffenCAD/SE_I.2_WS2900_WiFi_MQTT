@@ -19,6 +19,8 @@ private:
     Ws2900Data      *WsData;
     SoftwareSerial  *WsSerial;
     NTPClient       *NtpClient;
+
+    bool initOta;
     
 public:
     /// @brief init the router class
@@ -38,6 +40,9 @@ public:
     /// @param array 
     void createDate(char *array);
 
+    /// @brief 
+    /// @return 
+    bool initOTA();
 
     int strnrcmp(const char* s1, const char* s2, size_t ss1, size_t ss2, size_t n);
 };
