@@ -13,6 +13,11 @@
 
 #include "PubSubClient.h"
 
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <AsyncElegantOTA.h>
+
+
 //##    define stuff    ####
 #define LED_PIN 4
 
@@ -23,6 +28,10 @@
 #define ComBaud 115200
 
 #define bufSize 300
+
+unsigned long initOtaTime = 0;
+long long int initOtaTimeout = 3600000;
+//unsigned long initOtaTimeout = 60000;
 
 const char *ssid     = "Hotspot";
 const char *password = "Passwort";
@@ -48,4 +57,6 @@ NTPClient       NtpClient(NtpUdp, "time.fh-augsburg.de");
 WiFiClientSecure    espClientSec;
 PubSubClient        MqttClient(espClientSec);
 
-#endif
+AsyncWebServer server(80);
+
+#endif 
