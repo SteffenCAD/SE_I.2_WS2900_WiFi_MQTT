@@ -11,6 +11,8 @@
 #include "NTPClient.h"
 #include "WiFiUdp.h"
 
+#include "PubSubClient.h"
+
 //##    define stuff    ####
 #define LED_PIN 4
 
@@ -22,9 +24,18 @@
 
 #define bufSize 300
 
-const char *ssid     = "";
-const char *password = "";
+const char *ssid     = "Hotspot";
+const char *password = "Passwort";
 
+//define MQTT stuff
+const char*     mqtt_server     = "se-homecontrol.informatik.tha.de";
+const uint16_t  mqtt_port       = 15;
+const char*     mqtt_clientId   = "Noerdlingen_11";
+const char*     mqtt_user       = "Noerdlingen_1";
+const char*     mqtt_pass       = "Ryn6Kj1MDG";
+
+const char* mqtt_topic          = "se/i2projekt/noerdlingen/wetterstation";
+const char* mqtt_topic2         = "se/i2projekt/noerdlingen/WS";
 //##    objects         ####    
 Ws2900Data      WsData;
 SoftwareSerial  WsSerial(WsRxPin, WsTxPin); // RX, TX
@@ -32,8 +43,9 @@ router          WsRouter;
 ringbuffer      WsBuffer;
 
 WiFiUDP         NtpUdp;
-NTPClient       NtpClient(NtpUdp, "pool.ntp.org");
+NTPClient       NtpClient(NtpUdp, "time.fh-augsburg.de");
 
-
+WiFiClientSecure    espClientSec;
+PubSubClient        MqttClient(espClientSec);
 
 #endif

@@ -2,9 +2,19 @@
 #define _WS2900DATA_H_
 
 #include "Arduino.h"
-
+#include <string>
+#include <iostream>
+#include <sstream>
 
 //define position of data
+
+#define posTimeYear     4
+#define posTimeMonth    5
+#define posTimeDay      6
+#define posTimeHour     7
+#define posTimeMin      8
+#define posTimeSec      9
+
 #define posTempOutside      16
 #define posHumidityOutside  28
 #define posPressureOutside  33
@@ -22,31 +32,45 @@
 #define posRain 55
 
 
+#define mqttNumOfValuesToSend 8;
+
 class Ws2900Data
 {
 private:
 
-    bool newData;
+    //time data
+    uint8_t year;
+    uint8_t month; 
+    uint8_t day;
+    uint8_t hour; 
+    uint8_t minute;
+    uint8_t second; 
 
+    //sensor data
     float tempOutside;
     uint8_t humidityOutside;
     float pressureOutside;
 
     float tempInside;
     uint8_t humidityInside;
-    float pressureInside;
 
     float windSpeed;
     uint16_t windDirection;
-    char windOrientation[2];
-    const char *Orientations[8][2] = {"N","NO","O","SO","S","SW","W","NW"};
+
 
     float lightIntensity;
     uint8_t uvIntensity;
 
     float rain;             //mm/h
 
+
+    bool newData;
+    char windOrientation[2];
+    const char *Orientations[8][2] = {"N","NO","O","SO","S","SW","W","NW"};
+
     //private function to set the data
+    void set_time(char *buff);
+
     void set_TempOutside(char *buff);
     void set_HumidityOutside(char *buff);
     void set_PressureOutside(char *buff);
@@ -65,15 +89,16 @@ private:
 
 public:
     Ws2900Data(/* args */);
-    ~Ws2900Data();
 
     void get_time(char buff);
-
+    String get_time();
     //function to fill data
     void    set_newData(char *buff);
     bool    available();
 
-    void    print(char *retval);
+    String  toString();
+    String  toJson(bool debug);
+
 
     float   get_TempOutside();
     uint8_t get_HumidityOutside();
