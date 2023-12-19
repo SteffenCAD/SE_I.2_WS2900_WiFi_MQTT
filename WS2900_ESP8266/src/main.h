@@ -16,6 +16,7 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <AsyncElegantOTA.h>
+#include <Ticker.h>
 
 
 //##    define stuff    ####
@@ -31,10 +32,25 @@
 
 unsigned long initOtaTime = 0;
 long long int initOtaTimeout = 3600000;
-//unsigned long initOtaTimeout = 60000;
+//long long int initOtaTimeout = 240000;
+
+long long int serialTimestamp = 0;
 
 const char *ssid     = "Hotspot";
 const char *password = "Passwort";
+
+bool otaRunning = false;
+
+const char* hotSpotSsid = "WS-OTA-Hotspot";
+const char* hotSpotPassword = "123456789";
+IPAddress apIP(192, 168, 1, 1);
+
+WiFiEventHandler wifiConnectHandler;
+WiFiEventHandler wifiDisconnectHandler;
+Ticker wifiReconnectTimer;
+
+String otaMessage = "";
+
 
 //define MQTT stuff
 const char*     mqtt_server     = "se-homecontrol.informatik.tha.de";
@@ -45,6 +61,9 @@ const char*     mqtt_pass       = "Ryn6Kj1MDG";
 
 const char* mqtt_topic          = "se/i2projekt/noerdlingen/wetterstation";
 const char* mqtt_topic2         = "se/i2projekt/noerdlingen/WS";
+
+const bool mqttEnabled = false;
+
 //##    objects         ####    
 Ws2900Data      WsData;
 SoftwareSerial  WsSerial(WsRxPin, WsTxPin); // RX, TX
@@ -53,6 +72,7 @@ ringbuffer      WsBuffer;
 
 WiFiUDP         NtpUdp;
 NTPClient       NtpClient(NtpUdp, "time.fh-augsburg.de");
+//NTPClient       NtpClient(NtpUdp, "162.159.200.1");
 
 WiFiClientSecure    espClientSec;
 PubSubClient        MqttClient(espClientSec);
