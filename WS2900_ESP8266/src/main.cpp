@@ -146,7 +146,7 @@ void loop()
 
 
   //if ota service has to init
-  if(WsRouter.initOTA() || (otaRunning == false && millis() > 120000))
+  if(WsRouter.initOTA() && otaRunning == false)
   {
     Serial.println("OTA requested");
     initOtaTime = millis();

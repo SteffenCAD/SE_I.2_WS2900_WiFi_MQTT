@@ -62,7 +62,7 @@ const char*     mqtt_pass       = "Ryn6Kj1MDG";
 const char* mqtt_topic          = "se/i2projekt/noerdlingen/wetterstation";
 const char* mqtt_topic2         = "se/i2projekt/noerdlingen/WS";
 
-const bool mqttEnabled = false;
+const bool mqttEnabled = true;
 
 //##    objects         ####    
 Ws2900Data      WsData;
