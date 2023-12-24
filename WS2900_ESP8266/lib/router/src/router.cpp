@@ -78,7 +78,7 @@
     ulong resp4_delay   = 25;   
 
 
-void router::begin(ringbuffer *buffer, Ws2900Data *data, SoftwareSerial *serial, NTPClient *ntpClient)
+void router::begin(ringbuffer *buffer, Ws2900Data *data, HardwareSerial *serial, NTPClient *ntpClient)
 {
     //save reference to object
     Wsbuffer    = buffer;

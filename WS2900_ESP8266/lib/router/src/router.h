@@ -17,17 +17,17 @@ class router
 private:
     ringbuffer      *Wsbuffer;
     Ws2900Data      *WsData;
-    SoftwareSerial  *WsSerial;
+    HardwareSerial  *WsSerial;
     NTPClient       *NtpClient;
 
-    bool initOta;
+    bool initOta = false;
     
 public:
     /// @brief init the router class
     /// @param buffer 
     /// @param data 
     /// @param serial 
-    void begin(ringbuffer *buffer, Ws2900Data *data, SoftwareSerial *serial, NTPClient *ntpClient);
+    void begin(ringbuffer *buffer, Ws2900Data *data, HardwareSerial *serial, NTPClient *ntpClient);
     
     /// @brief has to execute in main loop to process data
     void route();
