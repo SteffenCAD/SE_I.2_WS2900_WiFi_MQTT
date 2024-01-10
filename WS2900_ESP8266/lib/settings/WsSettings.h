@@ -12,27 +12,8 @@
 #define eepromStartAddr 0   
 #define eepromSize 512      //maximum size of eeprom
 
-class WsSettings
-{
-private:
-    //struct to serialize settings to eeprom
-    struct data
-    {
-        char      wifiSsid[20];
-        char      wifiPwd [20];
-        char      mqtt_server[100];
-        uint16_t  mqtt_port;
-        char      mqtt_clientId[20];
-        char      mqtt_user[20];
-        char      mqtt_pass [20];
-        char      mqtt_topic[100];
-        char      ntp_server[100];
-    };    
 
-    ESP8266WebServer *webServer;
-    SoftwareSerial *DbgSerial;
-
-    const char *htmlCode = R"html(
+   const char * const htmlCode = R"html(
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -144,6 +125,29 @@ private:
 </html>
     )html";
 
+
+
+
+
+class WsSettings
+{
+private:
+    //struct to serialize settings to eeprom
+    struct data
+    {
+        char      wifiSsid[20];
+        char      wifiPwd [20];
+        char      mqtt_server[100];
+        uint16_t  mqtt_port;
+        char      mqtt_clientId[20];
+        char      mqtt_user[20];
+        char      mqtt_pass [20];
+        char      mqtt_topic[100];
+        char      ntp_server[100];
+    };    
+
+    ESP8266WebServer *webServer;
+    SoftwareSerial *DbgSerial;
 
     void saveToEEPROM(const char *password, const char *ssid, const char *topic);
 

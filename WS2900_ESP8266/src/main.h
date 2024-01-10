@@ -123,7 +123,7 @@ ESP8266WebServer server(80);
 
 WsSettings settings;
 
-const char *htmlUpdateMode = R"html(
+const char * const htmlUpdateMode = R"html(
     <!DOCTYPE html>
     <html lang="de">
     <head>
