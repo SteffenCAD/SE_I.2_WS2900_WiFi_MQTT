@@ -4,18 +4,32 @@
 /// @brief setup
 void setup() 
 {
+  //setup GPIOs
   pinMode(LED_PIN, OUTPUT);
   pinMode(OTA_PIN, INPUT_PULLUP);
   digitalWrite(LED_PIN, HIGH);
 
+  //setup Serial
   WsSerial.begin(WsBaud);
   DbgSerial.begin(DbgBaud);
   
-  DbgSerial.println("--------------------------------------------------------");
-  espClientSec.setInsecure();   //allow unsecure connections (don't compare certificate)
+  //DbgSerial.println("--------------------------------------------------------");
+  //DbgSerial.println("start WS2900");
 
   //OTA-Update stuff
+  //DbgSerial.println("read rtcUserMemory for update mode");
   ESP.rtcUserMemoryRead(otaEnalbedOff, &otaEnabled, sizeof(otaEnabled));
+  
+  //DbgSerial.println("read user settings from eeprom");
+  settings.begin(&DbgSerial);
+  settings.load();
+
+  //DbgSerial.println("Init NTP time service");
+  NtpClient.setPoolServerName(settings.ntp_server.c_str());
+
+  //DbgSerial.println("WS Router begin");
+  WsRouter.begin(&WsBuffer, &WsData, &WsSerial, &NtpClient);
+
   if(otaEnabled == 1 || digitalRead(OTA_PIN) == 0)
   {
     DbgSerial.println("Enter OTA-Update mode");
@@ -30,25 +44,25 @@ void setup()
     otaEnabled = 0;
     ESP.rtcUserMemoryWrite(otaEnalbedOff, &otaEnabled, sizeof(otaEnabled));
 
+    //DbgSerial.println("create access point");
     createAp();
-    server.on("/", []() { server.send(200, "text/plain", "Hi! This is ElegantOTA Demo.");});
-    ElegantOTA.begin(&server);    // Start ElegantOTA
-    server.begin();
-    DbgSerial.println("HTTP server started");
 
+    //DbgSerial.println("begin elegant ota");
+    ElegantOTA.begin(&server);    // Start ElegantOTA
+
+    //DbgSerial.println("begin HTTP Server");
+    server.begin();
+
+    settings.open(&server);
   }
   else
   {
-    DbgSerial.println("Enter Normal mode");
+    //DbgSerial.println("Enter Normal mode");
     connectToWifi();
   }
- 
-  DbgSerial.println("WS Router begin");
-  WsRouter.begin(&WsBuffer, &WsData, &WsSerial, &NtpClient);
-
+  
   DbgSerial.println("Init complete");
 }
-
 
 /// @brief main loop
 void loop() 
@@ -62,9 +76,9 @@ if(!otaRunning)
 
       if (serialTimestamp + 10000 < millis())
       {
-        Serial.print(NtpClient.getFormattedTime());
-        Serial.print("  ");
-        Serial.println(WiFi.localIP());
+        DbgSerial.print(NtpClient.getFormattedTime());
+        DbgSerial.print("  ");
+        DbgSerial.println(WiFi.localIP());
         serialTimestamp = millis();
       }
 
@@ -96,7 +110,6 @@ if(!otaRunning)
       //print weather data to debug console
       DbgSerial.println(WsData.toString());
 
-
       if (WiFi.isConnected())
       {
 
@@ -105,11 +118,14 @@ if(!otaRunning)
           //publish to mqtt
           if(MqttClient.connected())
           {
-            MqttClient.publish(mqtt_topic, arr);
+            DbgSerial.print("MQTT|publish to: ");
+            DbgSerial.print(settings.mqtt_topic);
+            //DbgSerial.println(JsonData);
+            MqttClient.publish(settings.mqtt_topic.c_str(), arr);
           }
           else
           {
-            MqttClient.connect(mqtt_clientId, mqtt_user, mqtt_pass);
+            connectMqtt();
           }
         }
       }
@@ -145,43 +161,65 @@ if(!otaRunning)
   }
 }
 
-
 void connectToWifi() 
 {
-  DbgSerial.println("Connecting to Wi-Fi...");
+  //DbgSerial.println("Connecting to Wi-Fi...");
 
-  //wifiConnectHandler    = WiFi.onStationModeGotIP(onWifiConnect);
-  //wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWifiDisconnect);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(settings.wifiSsid.c_str(), settings.wifiPwd.c_str());
 
-  WiFi.begin(ssid, password);
+  //set autoconnect
+  WiFi.setAutoConnect(true);
+  WiFi.persistent(true);
 
+  //DbgSerial.println("Connected to Wi-Fi: ");
+  //DbgSerial.print("SSID: ");
+  //DbgSerial.println(settings.wifiSsid.c_str());
+  //DbgSerial.print("PASS: ");
+  //DbgSerial.println(settings.wifiPwd.c_str());
 
-  DbgSerial.println("Connected to Wi-Fi.");
-  DbgSerial.println(WiFi.localIP());
-
-  DbgSerial.println("Connect to NTP");
+  //DbgSerial.println("Connect to NTP");
   NtpClient.begin();
   NtpClient.setTimeOffset(0);
-
   NtpClient.update();
-  DbgSerial.println(NtpClient.getFormattedTime());
 
+  connectMqtt();
+
+  server.on("/", HTTP_GET, 
+  [](){   
+    server.send(200, "text/html", htmlUpdateMode);
+  });
+}
+
+void connectMqtt()
+{
   if (mqttEnabled == true)
   {
-    DbgSerial.println("init MQTT");
-    MqttClient.setServer(mqtt_server, mqtt_port);
-    MqttClient.connect(mqtt_clientId, mqtt_user, mqtt_pass);
+    //DbgSerial.println("MQTT|Init");    
+    //DbgSerial.println(settings.mqtt_server);
+    //DbgSerial.println(settings.mqtt_port);
+
+    //DbgSerial.println(settings.mqtt_clientId);
+    //DbgSerial.println(settings.mqtt_user);
+    //DbgSerial.println(settings.mqtt_pass);
+
+    //DbgSerial.println("MQTT|SetInsecure"); 
+    espClientSec.setInsecure();
+    //DbgSerial.println("MQTT|SetServer"); 
+    MqttClient.setServer(settings.mqtt_server.c_str(), settings.mqtt_port);
+    //DbgSerial.println("MQTT|connect"); 
+    MqttClient.connect(settings.mqtt_clientId.c_str(), settings.mqtt_user.c_str(), settings.mqtt_pass.c_str());
+    
+    DbgSerial.println(ESP.getFreeHeap());
+    //char err_buf[256];
+    //espClientSec.getLastSSLError(err_buf, sizeof(err_buf));
+    //DbgSerial.print("SSL error: ");
+    //DbgSerial.println(err_buf);
   }
   else
   {
-    DbgSerial.println("MQTT disabled in main.h");
+    //DbgSerial.println("MQTT disabled in main.h");
   }
-
-  DbgSerial.println("pre init OTA");
-  otaMessage = "WS is in normal operation mode. For updating the firmware please enter OTA update mode and connect to the OTA Hotspot";
-  server.on("/", []() { server.send(200, "text/plain", otaMessage);});
-  server.begin();
-
 }
 
 void createAp()
@@ -198,39 +236,9 @@ void createAp()
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAPConfig(local_IP,gateway,subnet);
   WiFi.softAP(ApSsid, ApPassword);
-}
 
-void onWifiConnect(const WiFiEventStationModeGotIP& event) 
-{
-  DbgSerial.println("Connected to Wi-Fi.");
-  DbgSerial.println(WiFi.localIP());
-
-  DbgSerial.println("Connect to NTP");
-  NtpClient.begin();
-  NtpClient.setTimeOffset(0);
-
-  NtpClient.update();
-  DbgSerial.println(NtpClient.getFormattedTime());
-
-  if (mqttEnabled == true)
-  {
-    DbgSerial.println("init MQTT");
-    MqttClient.setServer(mqtt_server, mqtt_port);
-    MqttClient.connect(mqtt_clientId, mqtt_user, mqtt_pass);
-  }
-  else
-  {
-    DbgSerial.println("MQTT disabled in main.h");
-  }
-
-  DbgSerial.println("pre init OTA");
-  otaMessage = "WS is in normal operation mode. For updating the firmware please enter OTA update mode and connect to the OTA Hotspot";
-  server.on("/", []() { server.send(200, "text/plain", otaMessage);});
-  server.begin();
-}
-
-void onWifiDisconnect(const WiFiEventStationModeDisconnected& event) 
-{
-  DbgSerial.println("Disconnected from Wi-Fi.");
-  wifiReconnectTimer.once(2, connectToWifi);
+  //server.on("/", HTTP_GET, 
+  //[](){   
+  //  server.send(200, "text/html", htmlUpdateMode);
+  //});
 }
