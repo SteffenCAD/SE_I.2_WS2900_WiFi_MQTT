@@ -119,7 +119,7 @@ if(!otaRunning)
           if(MqttClient.connected())
           {
             DbgSerial.print("MQTT|publish to: ");
-            DbgSerial.print(settings.mqtt_topic);
+            DbgSerial.println(settings.mqtt_topic);
             //DbgSerial.println(JsonData);
             MqttClient.publish(settings.mqtt_topic.c_str(), arr);
           }
@@ -163,7 +163,7 @@ if(!otaRunning)
 
 void connectToWifi() 
 {
-  //DbgSerial.println("Connecting to Wi-Fi...");
+  DbgSerial.println("Connecting to Wi-Fi...");
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(settings.wifiSsid.c_str(), settings.wifiPwd.c_str());
@@ -172,13 +172,13 @@ void connectToWifi()
   WiFi.setAutoConnect(true);
   WiFi.persistent(true);
 
-  //DbgSerial.println("Connected to Wi-Fi: ");
-  //DbgSerial.print("SSID: ");
-  //DbgSerial.println(settings.wifiSsid.c_str());
-  //DbgSerial.print("PASS: ");
-  //DbgSerial.println(settings.wifiPwd.c_str());
+  DbgSerial.println("Connected to Wi-Fi: ");
+  DbgSerial.print("SSID: ");
+  DbgSerial.println(settings.wifiSsid.c_str());
+  DbgSerial.print("PASS: ");
+  DbgSerial.println(settings.wifiPwd.c_str());
 
-  //DbgSerial.println("Connect to NTP");
+  DbgSerial.println("Connect to NTP");
   NtpClient.begin();
   NtpClient.setTimeOffset(0);
   NtpClient.update();
@@ -195,30 +195,35 @@ void connectMqtt()
 {
   if (mqttEnabled == true)
   {
-    //DbgSerial.println("MQTT|Init");    
-    //DbgSerial.println(settings.mqtt_server);
-    //DbgSerial.println(settings.mqtt_port);
+    DbgSerial.println("MQTT|Init");    
+    DbgSerial.println(settings.mqtt_server);
+    DbgSerial.println(settings.mqtt_port);
 
-    //DbgSerial.println(settings.mqtt_clientId);
-    //DbgSerial.println(settings.mqtt_user);
-    //DbgSerial.println(settings.mqtt_pass);
+    DbgSerial.println(settings.mqtt_clientId);
+    DbgSerial.println(settings.mqtt_user);
+    DbgSerial.println(settings.mqtt_pass);
 
-    //DbgSerial.println("MQTT|SetInsecure"); 
+    DbgSerial.println("MQTT|SetInsecure"); 
     espClientSec.setInsecure();
-    //DbgSerial.println("MQTT|SetServer"); 
+
+    DbgSerial.println("MQTT|reduce buffer size on TLS"); 
+    espClientSec.setBufferSizes(1024,1024);
+
+    DbgSerial.println("MQTT|SetServer"); 
     MqttClient.setServer(settings.mqtt_server.c_str(), settings.mqtt_port);
-    //DbgSerial.println("MQTT|connect"); 
+
+    DbgSerial.println("MQTT|connect"); 
     MqttClient.connect(settings.mqtt_clientId.c_str(), settings.mqtt_user.c_str(), settings.mqtt_pass.c_str());
     
     DbgSerial.println(ESP.getFreeHeap());
-    //char err_buf[256];
-    //espClientSec.getLastSSLError(err_buf, sizeof(err_buf));
-    //DbgSerial.print("SSL error: ");
-    //DbgSerial.println(err_buf);
+    char err_buf[256];
+    espClientSec.getLastSSLError(err_buf, sizeof(err_buf));
+    DbgSerial.print("SSL error: ");
+    DbgSerial.println(err_buf);
   }
   else
   {
-    //DbgSerial.println("MQTT disabled in main.h");
+    DbgSerial.println("MQTT disabled in main.h");
   }
 }
 
@@ -237,8 +242,8 @@ void createAp()
   WiFi.softAPConfig(local_IP,gateway,subnet);
   WiFi.softAP(ApSsid, ApPassword);
 
-  //server.on("/", HTTP_GET, 
-  //[](){   
-  //  server.send(200, "text/html", htmlUpdateMode);
-  //});
+  server.on("/", HTTP_GET, 
+  [](){   
+    server.send(200, "text/html", htmlUpdateMode);
+  });
 }
