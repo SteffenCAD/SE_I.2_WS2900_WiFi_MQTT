@@ -263,9 +263,6 @@ void router::createDate(char *array)
     {
         memcpy(array, resp4, 11);
     }
-
-
-
 }
 
 void router::checkSum_8Mod256(char *array, size_t size)
