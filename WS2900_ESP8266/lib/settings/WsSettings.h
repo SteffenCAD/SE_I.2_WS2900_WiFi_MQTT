@@ -17,6 +17,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="utf-8"/>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -54,8 +55,8 @@
   </style>
 </head>
 <body>
-  <h2>WS2900 Einstellungen</h2>
   <form>
+    <h2>WS2900 Einstellungen</h2>
     <hr>
     WLAN SSID:      <input type="text" id="wlanSsid" name="wlanSsid"><br>
     WLAN Password:  <input type="password" id="wlanPass" name="wlanPass"><br>

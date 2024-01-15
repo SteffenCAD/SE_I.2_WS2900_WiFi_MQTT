@@ -10,24 +10,27 @@
 
 #define bufSize 300
 
-//#define printRawData
+enum WsState {WiFiCon, WiFiDiscon, UpdateMode};
 
 class router
 {
+
 private:
     ringbuffer      *Wsbuffer;
     Ws2900Data      *WsData;
     HardwareSerial  *WsSerial;
     NTPClient       *NtpClient;
-
-    bool initOta = false;
+    SoftwareSerial  *DbgSerial;
     
+    bool initOta = false;
+    WsState currentState = WsState::WiFiDiscon;
+
 public:
     /// @brief init the router class
     /// @param buffer 
     /// @param data 
     /// @param serial 
-    void begin(ringbuffer *buffer, Ws2900Data *data, HardwareSerial *serial, NTPClient *ntpClient);
+    void begin(ringbuffer *buffer, Ws2900Data *data, HardwareSerial *serial, NTPClient *ntpClient, SoftwareSerial *DBGserial);
     
     /// @brief has to execute in main loop to process data
     void route();
@@ -44,7 +47,7 @@ public:
     /// @return 
     bool initOTA();
 
-    int strnrcmp(const char* s1, const char* s2, size_t ss1, size_t ss2, size_t n);
+    void setState(WsState state);
 };
 
 

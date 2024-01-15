@@ -1,15 +1,25 @@
 #include "router.h"
 
+#pragma region variables
     char temp1[4]; 
     char WsRawData[134]; //define array with size of raw weather data, exclude checksum
 
     //define patterns
     //pattern1 ################################################################################################################################################
     // status response
-    char patt1[]        = {0x07,0x00,0x04,0x0B};
-    //char resp1[]        = {0x07,0x00,0x06,0x04,0x03,0x14};    //no connection to WLAN, WLAN host ?
-    //char resp1[]        = {0x07,0x00,0x06,0x01,0x02,0x10};    //only WLAN-symbol is blinking
-    char resp1[]        = {0x07,0x00,0x06,0x02,0x02,0x11};      //connection to WLAN
+    char patt1[]            = {0x07,0x00,0x04,0x0B};
+    char resp1[]            = {0x07,0x00,0x06,0x04,0x03,0x14};      //init response with no connection
+
+    //define responses
+    //char resp1_wifiDiscon[] = {0x07,0x00,0x06,0x01,0x02,0x10};      //WLAN symbol blinking      -> no wlan connection
+    char resp1_wifiDiscon[] = {0x07,0x00,0x06,0x01,0x03,0x11};      //WLAN(3balken) blinking    -> connecto to wlan
+
+    //char resp1_wifiCon[]    = {0x07,0x00,0x06,0x02,0x02,0x11};      //connection to WLAN        -> connecto to wlan
+    char resp1_wifiCon[]    = {0x07,0x00,0x06,0x02,0x03,0x12};      //WLAN(3balken) nonBlink    -> connecto to wlan
+
+    char resp1_update[]     = {0x07,0x00,0x06,0x04,0x03,0x14};      //WLAN/M-B symbol blinking  -> update mode
+
+
     bool resp1_send     = false;
     unsigned long resp1_time    = 0;    //save time when response was received
     unsigned long resp1_delay   = 9;    //10ms
@@ -76,16 +86,16 @@
     bool resp4_send     = false;
     ulong resp4_time    = 0; 
     ulong resp4_delay   = 25;   
+#pragma endregion
 
-
-void router::begin(ringbuffer *buffer, Ws2900Data *data, HardwareSerial *serial, NTPClient *ntpClient)
+void router::begin(ringbuffer *buffer, Ws2900Data *data, HardwareSerial *serial, NTPClient *ntpClient, SoftwareSerial *DBGserial)
 {
     //save reference to object
     Wsbuffer    = buffer;
     WsData      = data;
     WsSerial    = serial;
     NtpClient   = ntpClient;
-    
+    DbgSerial   = DBGserial;
 }
 
 void router::route()
@@ -94,13 +104,7 @@ void router::route()
     while(Wsbuffer->available())
     {
         Wsbuffer->getSegment(temp1, sizeof(temp1));
-        #ifdef printRawData
-        for(uint16_t i =0; i< 4; i++)
-        {
-            Serial.printf("%2x;",temp1[i]);
-        }
-        Serial.println();
-        #endif
+
         if(strncmp(temp1, patt1, 4) == 0)
         {       
             //indicate that we ned to send response
@@ -143,15 +147,10 @@ void router::route()
 
             //get raw data from ring buffer (size of WsRawData array), start pos = current read
             Wsbuffer->getSegment(WsRawData, sizeof(WsRawData));
-            //Wsbuffer->getSegmentStart(Wsbuffer->bufferTail, WsRawData, sizeof(WsRawData));
-
-            #ifdef printRawData
-            for(uint16_t i =0; i< 100; i++)
-            {
-                Serial.printf("%2x;",WsRawData[i]);
-            }
-            Serial.println();
-            #endif
+            DbgSerial->print("checksum: ");
+            DbgSerial->print(WsRawData[133], HEX);
+            DbgSerial->print("  |   calculated: ");
+            DbgSerial->println(WsData->calcChecksum(WsRawData,133),HEX);
 
             WsData->set_newData(WsRawData);            
         }
@@ -164,7 +163,6 @@ void router::route()
         //reset
         resp1_send = false;
         resp1_time = 0;
-
         //send response
         for(uint32_t i = 0; i < (uint32_t)sizeof(resp1); i++)
         {
@@ -178,7 +176,7 @@ void router::route()
         resp2_time = 0;
 
         //send response
-        for(int i = 0; i < sizeof(resp2); i++)
+        for(unsigned int i = 0; i < sizeof(resp2); i++)
         {
             WsSerial->write(resp2[i]);
         }
@@ -193,7 +191,7 @@ void router::route()
         createDate(respTime);
 
         //send response
-        for(int i = 0; i < sizeof(respTime); i++)
+        for(unsigned int i = 0; i < sizeof(respTime); i++)
         {
             WsSerial->write(respTime[i]);
         }
@@ -205,7 +203,7 @@ void router::route()
         resp4_time = 0;
 
         //send response
-        for(int i = 0; i < sizeof(resp4); i++)
+        for(unsigned int i = 0; i < sizeof(resp4); i++)
         {
             WsSerial->write(resp4[i]);
         }
@@ -217,7 +215,7 @@ void router::route()
         resp5_time = 0;
 
         //send response
-        for(int i = 0; i < sizeof(resp5); i++)
+        for(unsigned int i = 0; i < sizeof(resp5); i++)
         {
             WsSerial->write(resp5[i]);
         }
@@ -229,7 +227,7 @@ void router::route()
         resp6_time = 0;
 
         //send response
-        for(int i = 0; i < sizeof(resp6); i++)
+        for(unsigned int i = 0; i < sizeof(resp6); i++)
         {
             WsSerial->write(resp6[i]);
         }
@@ -283,4 +281,24 @@ bool router::initOTA()
     if(initOta) initOta = false;
     //return state of available data
     return retval;
+}
+
+void router::setState(WsState state)
+{
+    //save current state
+    currentState = state;
+
+    //set resp1
+    switch (currentState)
+    {
+    case WsState::WiFiCon:
+        memcpy(resp1, resp1_wifiCon, sizeof(resp1));
+        break;
+    case WsState::WiFiDiscon:
+        memcpy(resp1, resp1_wifiDiscon, sizeof(resp1));
+        break;
+    case WsState::UpdateMode:
+        memcpy(resp1, resp1_update, sizeof(resp1));
+        break;
+    }
 }
