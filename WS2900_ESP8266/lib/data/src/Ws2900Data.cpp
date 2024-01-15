@@ -23,18 +23,17 @@ Ws2900Data::Ws2900Data(/* args */)
     windOrientation[0] = 'N';
 }
 
-
-
 #pragma region private_functions
 
     void Ws2900Data::set_time(char *buff)
     {
-        year    = buff[posTimeYear];
-        month   = buff[posTimeMonth];
-        day     = buff[posTimeDay];
-        hour    = buff[posTimeHour];
-        minute  = buff[posTimeMin];
-        second  = buff[posTimeSec];
+        time.tm_year = buff[posTimeYear]+2000;
+        time.tm_mon  = buff[posTimeMonth];
+        time.tm_mday = buff[posTimeDay];
+        time.tm_hour = buff[posTimeHour] + zonetime;
+        if(time.tm_hour >= 24) {time.tm_hour = time.tm_hour - 24;}
+        time.tm_min  = buff[posTimeMin];
+        time.tm_sec  = buff[posTimeSec];
     }
 
     void Ws2900Data::set_TempOutside(char *buff)
@@ -101,26 +100,28 @@ Ws2900Data::Ws2900Data(/* args */)
     }
 #pragma endregion
 
-
 #pragma region public_functions
-
 void Ws2900Data::set_newData(char *buff)
 {
-    set_time(buff);
-    set_TempOutside(buff);
-    set_HumidityOutside(buff);
-    set_PressureOutside(buff);
-    set_TempInside(buff);
-    set_HumidityInside(buff);
-    set_WindSpeed(buff);
-    set_WindDirection(buff);
-    //set_WindOrientation();
-    set_LightIntensity(buff);
-    set_UvIntensity(buff);
-    set_Rain(buff);
+    //check if sum of buffer is correct
+    if(calcChecksum(buff, posCheckSum) == buff[posCheckSum])
+    {
+        set_time(buff);
+        set_TempOutside(buff);
+        set_HumidityOutside(buff);
+        set_PressureOutside(buff);
+        set_TempInside(buff);
+        set_HumidityInside(buff);
+        set_WindSpeed(buff);
+        set_WindDirection(buff);
+        //set_WindOrientation();
+        set_LightIntensity(buff);
+        set_UvIntensity(buff);
+        set_Rain(buff);
 
-    //inicate that new Data is available
-    newData = true;
+        //inicate that new Data is available
+        newData = true;
+    }
 }
 
 bool Ws2900Data::available()
@@ -150,97 +151,102 @@ String Ws2900Data::toString()
     return retval;
 }
 
-
 String Ws2900Data::toJson(bool debug)
 {
-    String result = "{\n";
+    String result = "{";
     // append debug
-    result += "  \"debug\": " + String(debug ? "true" : "false") + ",\n";
+    result += "\"debug\":" + String(debug ? "true" : "false") + ",";
     // append sensors
-    result += "  \"sensors\": [\n";
+    result += "\"sensors\":[";
 
     //add sensor
-    result += "    {\n";
-    result += "      \"sensorid\": 1,\n";
-    result += "      \"value\": " +  String(tempOutside,2) + ",\n";
-    result += "      \"timestamp\": \"" + get_time() + "\"\n";
-    result += "    },\n";
+    result += "{";
+    result += "\"sensorid\":1,";
+    result += "\"value\":\"" +  String(tempOutside,2) + "\",";
+    result += "\"timestamp\":\"" + get_time() + "\"";
+    result += "},";
         
     //add sensor
-    result += "    {\n";
-    result += "      \"sensorid\": 2,\n";
-    result += "      \"value\": " +  String(humidityOutside) + ",\n";
-    result += "      \"timestamp\": \"" + get_time() + "\"\n";
-    result += "    },\n";
+    result += "{";
+    result += "\"sensorid\":2,";
+    result += "\"value\":\"" +  String(humidityOutside) + "\",";
+    result += "\"timestamp\":\"" + get_time() + "\"";
+    result += "},";
     //add sensor
-    result += "    {\n";
-    result += "      \"sensorid\": 3,\n";
-    result += "      \"value\": " +  String(pressureOutside,2) + ",\n";
-    result += "      \"timestamp\": \"" + get_time() + "\"\n";
-    result += "    },\n";
+    result += "{";
+    result += "\"sensorid\":3,";
+    result += "\"value\":\"" +  String(pressureOutside,2) + "\",";
+    result += "\"timestamp\":\"" + get_time() + "\"";
+    result += "},";
     //add sensor
-    result += "    {\n";
-    result += "      \"sensorid\": 4,\n";
-    result += "      \"value\": " +  String(windSpeed,2) + ",\n";
-    result += "      \"timestamp\": \"" + get_time() + "\"\n";
-    result += "    },\n";
+    result += "{";
+    result += "\"sensorid\":4,";
+    result += "\"value\":\"" +  String(windSpeed,2) + "\",";
+    result += "\"timestamp\":\"" + get_time() + "\"";
+    result += "},";
     //add sensor
-    result += "    {\n";
-    result += "      \"sensorid\": 5,\n";
-    result += "      \"value\": " +  String(windDirection) + ",\n";
-    result += "      \"timestamp\": \"" + get_time() + "\"\n";
-    result += "    },\n";
+    result += "{";
+    result += "\"sensorid\":5,";
+    result += "\"value\":\"" +  String(windDirection) + "\",";
+    result += "\"timestamp\":\"" + get_time() + "\"";
+    result += "},";
     //add sensor
-    result += "    {\n";
-    result += "      \"sensorid\": 6,\n";
-    result += "      \"value\": " +  String(lightIntensity,2) + ",\n";
-    result += "      \"timestamp\": \"" + get_time() + "\"\n";
-    result += "    },\n";
+    result += "{";
+    result += "\"sensorid\":6,";
+    result += "\"value\":\"" +  String(lightIntensity,2) + "\",";
+    result += "\"timestamp\":\"" + get_time() + "\"";
+    result += "},";
     //add sensor
-    result += "    {\n";
-    result += "      \"sensorid\": 7,\n";
-    result += "      \"value\": " +  String(uvIntensity) + ",\n";
-    result += "      \"timestamp\": \"" + get_time() + "\"\n";
-    result += "    },\n";
+    result += "{";
+    result += "\"sensorid\":7,";
+    result += "\"value\":\"" +  String(uvIntensity) + "\",";
+    result += "\"timestamp\":\"" + get_time() + "\"";
+    result += "},";
     //add sensor
-    result += "    {\n";
-    result += "      \"sensorid\": 8,\n";
-    result += "      \"value\": " +  String(rain,2) + ",\n";
-    result += "      \"timestamp\": \"" + get_time() + "\"\n";
-    result += "    }\n";
+    result += "{";
+    result += "\"sensorid\":8,";
+    result += "\"value\":\"" +  String(rain,2) + "\",";
+    result += "\"timestamp\":\"" + get_time() + "\"";
+    result += "}";
 
-    result += " ]\n} ";
+    result += "]}";
 
     return result;
 }
 
 String Ws2900Data::get_time()
 {
-    return String((uint16_t)year + 2000) + "-" + String(month)+ "-" + String(day)+ "T" 
-            + String(hour) + ":" + String(minute) + ":" + String(second) + ".000Z";
+    char DateAndTimeString[20]; //19 digits plus the null char
+
+    sprintf(DateAndTimeString, "%4d-%02d-%02dT%02d:%02d:%02d.000Z", time.tm_year, time.tm_mon, time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);
+    return String(DateAndTimeString);
+
 }
 
-float   Ws2900Data::get_TempOutside()       {return tempOutside;}
+float       Ws2900Data::get_TempOutside()       {return tempOutside;}
+uint8_t     Ws2900Data::get_HumidityOutside()   {return humidityOutside;}
+float       Ws2900Data::get_PressureOutside()   {return pressureOutside;}
+float       Ws2900Data::get_TempInside()        {return tempInside;}
+uint8_t     Ws2900Data::get_HumidityInside()    {return humidityInside;}
+float       Ws2900Data::get_WindSpeed()         {return windSpeed;}
+uint16_t    Ws2900Data::get_WindDirection()     {return windDirection;}
+char*       Ws2900Data::get_WindOrientation()   {return windOrientation;}
+float       Ws2900Data::get_LightIntensity()    {return lightIntensity;}
+uint8_t     Ws2900Data::get_UvIntensity()       {return uvIntensity;}
+float       Ws2900Data::get_Rain()              {return rain;}
 
-uint8_t Ws2900Data::get_HumidityOutside()   {return humidityOutside;}
+uint8_t Ws2900Data::calcChecksum(char* buff, uint16_t datalen)
+{
+    //calculate sum
+    uint64_t sum = 0;
+    for(uint16_t i = 0; i < datalen; i++)
+    {
+        sum += buff[i];
+    }
 
-float   Ws2900Data::get_PressureOutside()   {return pressureOutside;}
-
-float   Ws2900Data::get_TempInside()        {return tempInside;}
-
-uint8_t Ws2900Data::get_HumidityInside()    {return humidityInside;}
-
-float   Ws2900Data::get_WindSpeed()         {return windSpeed;}
-
-uint16_t Ws2900Data::get_WindDirection()     {return windDirection;}
-
-char*   Ws2900Data::get_WindOrientation()   {return windOrientation;}
-
-float Ws2900Data::get_LightIntensity()    {return lightIntensity;}
-
-uint8_t Ws2900Data::get_UvIntensity()       {return uvIntensity;}
-
-float Ws2900Data::get_Rain()              {return rain;}
-
+    //calculate checksum modulo 256
+    uint8_t mod256sum = sum % 256;
+    return mod256sum;
+}
 
 #pragma endregion

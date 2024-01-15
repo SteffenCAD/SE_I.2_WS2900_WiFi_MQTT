@@ -29,22 +29,18 @@
 #define posLightIntensity   90
 #define posUvIntensity      96
 
-#define posRain 55
+#define posRain             55
 
-
-#define mqttNumOfValuesToSend 8;
+#define posCheckSum         133
+//europe/berlin, used to correct data from weather station
+#define zonetime 1   
 
 class Ws2900Data
 {
 private:
 
     //time data
-    uint8_t year;
-    uint8_t month; 
-    uint8_t day;
-    uint8_t hour; 
-    uint8_t minute;
-    uint8_t second; 
+    tm time;
 
     //sensor data
     float tempOutside;
@@ -86,7 +82,7 @@ private:
     void set_UvIntensity(char* buff);
 
     void set_Rain(char* buff);
-
+    
 public:
     Ws2900Data(/* args */);
 
@@ -115,6 +111,9 @@ public:
     uint8_t get_UvIntensity();
 
     float get_Rain();
+
+    uint8_t calcChecksum(char* buff, uint16_t datalen);
+
 };
 
 #endif

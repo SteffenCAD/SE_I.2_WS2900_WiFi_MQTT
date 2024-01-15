@@ -1,18 +1,18 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
-//https://patorjk.com/software/taag/#p=display&h=0&v=3&f=Bigfig&t=
 
-///-------------------------------
-/// ___    __       __ _ 
-///  | |\|/  |  | ||_ | \
-/// _|_| |\__|__|_||__|_/
-///-------------------------------
+//https://patorjk.com/software/taag/#p=display&h=0&v=3&f=Bigfig&t=
+//-------------------------------
+/* ___    __       __ _         */
+/*  | |\|/  |  | ||_ | \        */
+/* _|_| |\__|__|_||__|_/        */
+//-------------------------------
 #include "Arduino.h"
 #include "SoftwareSerial.h"
 #include "ESP8266WiFi.h"
 #include "NTPClient.h"
 #include "WiFiUdp.h"
-
+#include "Ticker.h"
 
 #include "Ws2900Data.h"
 #include "ringbuffer.h"
@@ -24,23 +24,24 @@
 #include <ESP8266WebServer.h>
 #include <ElegantOTA.h>
 
+
 //-------------------------------
 //  _  __ _____   ______ _     __
 // | \|_ |_  | |\| |  | / \|\|(_ 
 // |_/|__|  _|_| |_|_ | \_/| |__)
 //-------------------------------
-#define LED_PIN 4
-#define OTA_PIN 14
+#define LED_PIN     4
+#define OTA_PIN     14
 
-#define WsTxPin 
-#define WsRxPin 
-#define WsBaud  9600
+#define WsTxPin     0
+#define WsRxPin     0
+#define WsBaud      9600
 
 #define DbgTxPin    12 
 #define DbgRxPin    16 //not used only debug
 #define DbgBaud     115200
 
-#define bufSize 300
+#define bufSize     300
 
 //-------------------------------
 //  _  _  _ ___ _ ___\ / _  __
@@ -50,7 +51,8 @@
 void connectToWifi();
 void createAp();
 void connectMqtt();
-
+void cyclicUpdate();
+void sendMqttData();
 //-------------------------------
 //    ___ __ __
 // |V| | (_ /  
@@ -59,19 +61,10 @@ void connectMqtt();
 long long int serialTimestamp = 0;
 
 //-------------------------------
-//    ___ _____
-// | | | |_  | 
-// |^|_|_|  _|_
-//-------------------------------
-//const char *ssid     = "Hotspot";
-//const char *password = "Passwort";
-
-//-------------------------------
 //  _ ___ _        _  _  _ ___ __
 // / \ | |_|---| ||_)| \|_| | |_ 
 // \_/ | | |   |_||  |_/| | | |__
 //-------------------------------
-
 const char* ApSsid      = "WS-OTA-Hotspot";
 const char* ApPassword  = "123456789";
 
@@ -91,12 +84,6 @@ uint32_t otaEnabled = 0;
 // |V|/ \ |  | 
 // | |\_X |  | 
 //-------------------------------
-//const char*     mqtt_server     = "se-homecontrol.informatik.tha.de";
-//const uint16_t  mqtt_port       = 15;
-//const char*     mqtt_clientId   = "Noerdlingen_11";
-//const char*     mqtt_user       = "Noerdlingen_1";
-//const char*     mqtt_pass       = "Ryn6Kj1MDG";
-//const char*     mqtt_topic      = "se/i2projekt/noerdlingen/wetterstation";
 const bool      mqttEnabled     = true;
 
 //-------------------------------
@@ -112,6 +99,7 @@ SoftwareSerial  DbgSerial(DbgRxPin, DbgTxPin);
 
 router          WsRouter;
 ringbuffer      WsBuffer;
+WsSettings      settings;
 
 WiFiUDP         NtpUdp;
 NTPClient       NtpClient(NtpUdp);
@@ -121,41 +109,75 @@ PubSubClient        MqttClient(espClientSec);
 
 ESP8266WebServer server(80);
 
-WsSettings settings;
-
+#pragma region defaultHTML
 const char * const htmlUpdateMode = R"html(
-    <!DOCTYPE html>
-    <html lang="de">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>WS2900 Update Modus</title>
-        <style>
-            body {
-                background-color: #18191A;
-                color: #E4E6EB;
-                font-family: Arial, sans-serif;
-            }
-            h1 {
-                text-align: center;
-            }
-            a {
-                color: #E4E6EB;
-                text-decoration: none;
-            }
-            a:hover {
-                text-decoration: underline;
-            }
-        </style>
-    </head>
-    <body>
-        <h1>WS2900 Update Modus</h1>
-        <p><a href="http://192.168.1.100/update" target="_blank">Update</a></p>
-        <p><a href="http://192.168.1.100/settings" target="_blank">Einstellungen</a></p>
-    </body>
-    </html>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WS2900 Update Modus</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #18191A;
+            color: #E4E6EB;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        form {
+            text-align: left;
+            width: 300px; /* Set a specific width for the form */
+            margin-top: 20px; /* Add some top margin for spacing */
+        }
+        h2 {
+            text-align: center;
+        }
+        hr {
+            border: 1px solid #E4E6EB;
+            margin: 20px 0;
+            width: 100%; /* Make the horizontal rule span the entire width */
+        }
+        a {
+            color: #3498db; /* Set the hyperlink color */
+            text-decoration: none;
+        }
+        a:hover {
+            color: #2077b9; /* Set the hyperlink color on hover */
+            text-decoration: underline;
+        }
+        .button {
+            padding: 10px 0; /* Adjust padding to center vertically within the button */
+            width: 100%; /* Make the button as wide as the container */
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <form>
+        <h2>WS2900</h2>
+        <hr>
+        <p>Softwareversion: <span id="softwareVersion">1.0.0</span></p>
+        <hr>
+        <p><a href="http://192.168.1.100/update" onclick="window.location.href = 'http://192.168.1.100/update'; return false;">Update</a></p>
+        <p><a href="http://192.168.1.100/settings" onclick="window.location.href = 'http://192.168.1.100/settings'; return false;">Einstellungen</a></p>
+        <hr>
+        <button class="button" onclick="resetWS()">Reset WS</button>
+    </form>
+    <script>
+        function resetWS() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/reset", true);
+            xhr.send();
+        }
+    </script>
+</body>
+</html>
     )html";
-
-
+#pragma endregion
 
 #endif 

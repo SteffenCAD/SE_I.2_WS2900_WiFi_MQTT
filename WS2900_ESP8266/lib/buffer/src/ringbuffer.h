@@ -13,13 +13,28 @@ private:
     bool        nextSegmentState =false;    //if true, next segment is complete
     uint16_t    nextSegmentSize = 0;    //number of bytes of next segment
     uint16_t    nextSegmentCount = 0;   //current counter of next segment
+    HardwareSerial  *_serial;
 
 public:
-
     char bufferData[ringBuffer_Size];
 
     uint16_t bufferHead = 0;
     uint16_t bufferTail = 0;
+
+    void begin(HardwareSerial *serial)
+    {
+        _serial = serial;
+    }
+
+    void loop()
+    {
+        //read all bytes to ring buffer
+        while(_serial->available() > 0 )
+        {
+            char input = _serial->read();
+            this->add(input);
+        }
+    }
 
     bool available()
     {
@@ -30,7 +45,6 @@ public:
         return false;
     }
 
-    //add 
     void add(char data)
     {
         incrPointer(&bufferHead);
